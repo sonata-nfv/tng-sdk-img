@@ -1,0 +1,31 @@
+#cloud-config
+power_state:
+  mode: poweroff
+  timeout: 30
+  condition: True
+package_update: true
+package_upgrade: true
+packages:
+- netplug
+write_files:
+- path: /etc/systemd/system/vnf-container.service
+  permissions: 0644
+  content: |
+$vnf_container_service
+- path: /etc/udev/rules.d/71-rename-ifs.rules
+  permissions: 0644
+  content: |
+$udev_rules
+- path: /etc/netplug/netplug
+  permissions: 0755
+  content: |
+$netplug
+- path: /etc/netplug/netplugd.conf
+  permissions: 0644
+  content: |
+$vdu_interfaces
+runcmd:
+- curl -fsSL https://get.docker.com/ | sh
+- docker pull $vdu_image
+- docker image tag $vdu_image vnf-container
+- systemctl enable vnf-container.service
