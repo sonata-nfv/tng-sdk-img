@@ -2,7 +2,7 @@
 
 EXEC="${0}"
 VERSION=0.1
-APP_DIR="/opt/tnk-sdk-img"
+APP_DIR="/opt/tng-sdk-img"
 TOOLS=$(ls "${APP_DIR}" 2> /dev/null)
 
 function print_help() {
@@ -37,7 +37,7 @@ function run_tool() {
   local tool="${APP_DIR}/${TOOL_NAME}/${TOOL_NAME}"
   
   if [ ! -f "${tool}" ]; then
-    echo "ERROR: Tool \"${tool_name}\" is not found"
+    echo "ERROR: Tool \"${tool_name}\" is not found."
     exit 1
   fi
   
@@ -52,6 +52,7 @@ function main() {
   fi
   
   if [[ "${#}" -lt 1 ]]; then
+    echo "ERROR: Missing parameters."
     print_help
     exit 1
   fi

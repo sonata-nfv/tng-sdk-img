@@ -14,10 +14,10 @@ function print_help() {
   echo "Usage:"
   echo -e "\t${EXEC} [OPTIONS] VNFD"
   echo "Options:"
-  echo -e "--help"
-  echo -e "--version"
-  echo -e "--platform   \tTarget platform - sonata (default) or tango"
-  echo -e "--base-image \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
+  echo -e "\t--help"
+  echo -e "\t--version"
+  echo -e "\t--platform   \tTarget platform - sonata (default) or tango"
+  echo -e "\t--base-image \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
 
 function check_requirements() {
@@ -184,6 +184,9 @@ function main() {
   convert
   delete_base_image
 }
+
+print_help
+exit 0
 
 main "${@}"
 
