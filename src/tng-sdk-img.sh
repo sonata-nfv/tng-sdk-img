@@ -2,7 +2,7 @@
 
 EXEC="${0}"
 VERSION=0.1
-APP_DIR="/opt/tng-sdk-img"
+APP_DIR="$HOME/.local/share/tng-sdk-img"
 TOOLS=$(ls "${APP_DIR}" 2> /dev/null)
 
 function print_help() {
