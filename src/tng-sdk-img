@@ -37,7 +37,7 @@ function run_tool() {
   local tool="${APP_DIR}/${tool_name}/${tool_name}"
   
   if [ ! -f "${tool}" ]; then
-    echo "ERROR: Tool \"${tool_name}\" is not found."
+    echo "ERROR: The tool \"${tool_name}\" is not found."
     exit 1
   fi
   

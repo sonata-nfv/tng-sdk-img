@@ -24,6 +24,10 @@ $netplug
   permissions: 0644
   content: |
 $vdu_interfaces
+- path: /etc/docker/daemon.json
+  permissions: 0644
+  content: |
+$docker_conf
 runcmd:
 - curl -fsSL https://get.docker.com/ | sh
 - docker pull $vdu_image

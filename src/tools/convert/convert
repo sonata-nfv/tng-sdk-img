@@ -8,7 +8,11 @@ BASE_IMAGE_URL="http://cloud-images.ubuntu.com/xenial/current/xenial-server-clou
 BASE_IMAGE=$(mktemp --suffix converter)
 BASE_IMAGE_SPECIFIED=false
 USE_LOCAL_REGISTRY=false
-PLATFORM='sonata'
+REGISTRY_PORT=5000
+PLATFORM="sonata"
+
+KVM_HOST_IP="10.0.2.2"
+
 
 function die() {
   echo "${@}"
@@ -16,15 +20,18 @@ function die() {
   exit 1
 }
 
+
 function print_help() {
   echo "Usage:"
   echo -e "\t${EXEC} [OPTIONS] VNFD"
   echo "Options:"
   echo -e "\t--help"
   echo -e "\t--version"
-  echo -e "\t--platform   \tTarget platform: sonata (default) or tango"
-  echo -e "\t--base-image \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
+  echo -e "\t--registry             \tRun the local docker registry. Specify to use local docker images."
+  echo -e "\t--platform <platform>  \tTarget platform: sonata (default) or tango"
+  echo -e "\t--base-image <path>    \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
+
 
 function check_requirements() {
   echo "Checking requirements"
@@ -36,8 +43,9 @@ function check_requirements() {
   echo "OK"
 }
 
+
 function create_seed() {
-  echo "Creating seed"
+  echo "Creating the seed"
   seed_image=$(mktemp --suffix converter)
   local user_data_file=$(mktemp --suffix converter)
   local udev_rules_file=$(mktemp --suffix converter)
@@ -54,6 +62,7 @@ function create_seed() {
   local netplug=$(cat ${netplug_file} | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")
   local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
+  local docker_conf="    {\"insecure-registries\":[\"${KVM_HOST_IP}:${REGISTRY_PORT}\"]}"
 
   eval "cat << EOF > "${user_data_file}"
 $(<${user_data_template})
@@ -67,25 +76,29 @@ EOF
   echo "OK"
 }
 
+
 function delete_seed() {
-  echo "Deleting seed"
+  echo "Deleting the seed"
   rm -f "${seed_image}"
   echo "OK"
 }
 
+
 function get_base_image() {
   [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
-  echo "Downloading base image"
+  echo "Downloading the base image"
   wget "${BASE_IMAGE_URL}" -O "${BASE_IMAGE}" -q --show-progress
   echo "OK"
 }
 
+
 function delete_base_image() {
   [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
-  echo "Deleting base image"
+  echo "Deleting the base image"
   rm -f "${BASE_IMAGE}"
   echo "OK"
 }
+
 
 function create_vdu() {
   echo "Creating VDU"
@@ -101,6 +114,7 @@ function create_vdu() {
   echo "OK"
 }
 
+
 function docker_image_exists() {
   local docker_image=(${1//:/ })
   local name="${docker_image[0]}"
@@ -111,13 +125,57 @@ function docker_image_exists() {
 }
 
 
+function set_registry_port() {
+  local port=0
+  local lowerport=0
+  local upperport=0
+
+  read lowerport upperport < /proc/sys/net/ipv4/ip_local_port_range
+  while :
+  do
+    port="`shuf -i "${lowerport}"-"${upperport}" -n 1`"
+    ss -lpn | grep -q ":${port} " || break
+  done
+
+  REGISTRY_PORT="${port}"
+}
+
+
+function start_docker_registry() {
+  echo "Starting the local docker registry."
+  set_registry_port
+  docker run -d -p "${REGISTRY_PORT}":5000 --restart=always --name registry registry:2
+  while ! nc -z localhost "${REGISTRY_PORT}"; do echo -n "."; sleep 1; done
+  echo "OK"
+}
+
+
+function push_image() {
+  image="${1}"
+  echo "Pushing the image ${image} to the local docker registry"
+  local image_tag="localhost:${REGISTRY_PORT}/vnf"
+  docker tag "${image}" "${image_tag}"
+  docker push "${image_tag}"
+  docker image rm "${image_tag}" &> /dev/null
+  echo "OK"
+}
+
+
+function stop_docker_registry() {
+  echo "Stopping the local docker registry."
+  docker container stop registry && docker container rm -v registry
+  echo "OK"
+}
+
+
 function convert() {
-  echo "Starting conversion"
+  echo "Starting the conversion"
   vnf_name=$(cat "${VNFD}" | shyaml get-value name)
-  echo $vnf_name
+
+  local local_image=false
 
   # Extract VDUs from descriptor and save them to temporary directory
-  vdu_dir=`mktemp -d --suffix converter`
+  local vdu_dir=`mktemp -d --suffix converter`
   cat "${VNFD}" | shyaml get-values virtual_deployment_units | head -n -1 | csplit -zs -f "${vdu_dir}"/ - /^$/ {*}
 
   for vdu in "${vdu_dir}"/*; do
@@ -129,13 +187,26 @@ function convert() {
     echo "Processing ${vdu_id}"
 
     if [ "${vdu_format}" != "docker" ]; then
-      echo "WARNING: 'vm_image_format' is not docker. Skipping VDU."
+      echo "WARNING: 'vm_image_format' is not 'docker'. Skipping the VDU."
       continue
     fi
 
-    if ! docker_image_exists "${vdu_image}"; then
-      echo "WARNING: Docker image '${vdu_image}' does not exist in Docker Hub. Skipping VDU."
-      continue
+    if "${USE_LOCAL_REGISTRY}"; then
+      if [[ -z "$(docker images -q ${vdu_image} 2> /dev/null)" ]]; then
+        echo "WARNING: The docker image '${vdu_image}' does not exist in locally. Trying to find it in Docker hub."
+        if ! docker_image_exists "${vdu_image}"; then
+          echo "WARNING: The docker image '${vdu_image}' does not exist in Docker Hub. Skipping the VDU."
+          continue
+        fi
+      else
+        push_image "${vdu_image}"
+        vdu_image="$KVM_HOST_IP:${REGISTRY_PORT}/vnf"
+      fi
+    else
+      if ! docker_image_exists "${vdu_image}"; then
+        echo "WARNING: The docker image '${vdu_image}' does not exist in Docker Hub. Skipping the VDU."
+        continue
+      fi
     fi
 
     create_seed
@@ -144,16 +215,19 @@ function convert() {
   done
 
   rm -rf "${vdu_dir}"
-  echo "Conversion finished."
+  echo "The conversion is finished."
 }
 
+
 function main() {
-  if [[ ${#} -lt 1 ]]; then
-    die "ERROR: VNFD is not specified."
+  check_requirements
+
+  if [[ "${#}" -lt 1 ]]; then
+    die "ERROR: A VNFD is not specified."
     exit 1
   fi
 
-  while [[ ${#} -gt 0 ]]; do
+  while [[ "${#}" -gt 0 ]]; do
     case "${1}" in
       -h|--help)
         print_help
@@ -164,12 +238,12 @@ function main() {
         exit 0
         ;;
       -p|--platform)
-        [[ -n "${2}" ]] || die "ERROR: Target platform is not specified."
+        [[ -n "${2}" ]] || die "ERROR: A target platform is not specified."
         PLATFORM="${2}"
         shift 2
         ;;
       -b|--base-image)
-        [[ -n "${2}" ]] || die "ERROR: Base image is not specified."
+        [[ -n "${2}" ]] || die "ERROR: A base image is not specified."
         BASE_IMAGE="${2}"
         BASE_IMAGE_SPECIFIED=true
         shift 2
@@ -190,13 +264,18 @@ function main() {
   done
   
   [[ -n "${VNFD}" ]] || die "ERROR: VNFD is not specified."
-  [[ -f "${VNFD}" ]] || die "ERROR: File ${VNFD} does not exist."
+  [[ -f "${VNFD}" ]] || die "ERROR: The file ${VNFD} does not exist."
 
-  check_requirements
+
+  [[ "${USE_LOCAL_REGISTRY}" ]] || start_docker_registry
+
   get_base_image
   convert
   delete_base_image
+
+  [[ "${USE_LOCAL_REGISTRY}" ]] || stop_docker_registry
 }
+
 
 main "${@}"
 
