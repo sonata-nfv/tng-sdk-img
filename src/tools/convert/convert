@@ -1,8 +1,14 @@
 #!/bin/bash
 
 EXEC="tng-sdk-img convert"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 VERSION="0.1"
-PLATFORM="sonata"
+
+BASE_IMAGE_URL="http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img"
+BASE_IMAGE=$(mktemp --suffix converter)
+BASE_IMAGE_SPECIFIED=false
+USE_LOCAL_REGISTRY=false
+PLATFORM='sonata'
 
 function die() {
   echo "${@}"
@@ -59,7 +65,6 @@ EOF
   rm -f "${user_data_file}"
   rm -f "${udev_rules_file}"
   echo "OK"
-
 }
 
 function delete_seed() {
@@ -69,25 +74,23 @@ function delete_seed() {
 }
 
 function get_base_image() {
-  [[ ! $base_image_specified ]] || return 0
+  [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
   echo "Downloading base image"
-  base_image=$(mktemp --suffix converter)
-  local image_url="http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img"
-  wget "${image_url}" -O "${base_image}" -q --show-progress
+  wget "${BASE_IMAGE_URL}" -O "${BASE_IMAGE}" -q --show-progress
   echo "OK"
 }
 
 function delete_base_image() {
-  [[ ! $base_image_specified ]] || return 0
+  [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
   echo "Deleting base image"
-  rm -f "${base_image}"
+  rm -f "${BASE_IMAGE}"
   echo "OK"
 }
 
 function create_vdu() {
   echo "Creating VDU"
   local vm_file="${vnf_name}_${vdu_id}.qcow2"
-  cp "${base_image}" "${vm_file}"
+  cp "${BASE_IMAGE}" "${vm_file}"
   kvm -display none -m 1024 -cdrom "${seed_image}" "${vm_file}" &
   local kvm_pid="${!}"
   while ps -p "${kvm_pid}" > /dev/null; do
@@ -110,12 +113,12 @@ function docker_image_exists() {
 
 function convert() {
   echo "Starting conversion"
-  vnf_name=$(cat "${vnfd}" | shyaml get-value name)
+  vnf_name=$(cat "${VNFD}" | shyaml get-value name)
   echo $vnf_name
 
   # Extract VDUs from descriptor and save them to temporary directory
   vdu_dir=`mktemp -d --suffix converter`
-  cat "${vnfd}" | shyaml get-values virtual_deployment_units | head -n -1 | csplit -zs -f "${vdu_dir}"/ - /^$/ {*}
+  cat "${VNFD}" | shyaml get-values virtual_deployment_units | head -n -1 | csplit -zs -f "${vdu_dir}"/ - /^$/ {*}
 
   for vdu in "${vdu_dir}"/*; do
     vdu_id=$(cat "${vdu}" | shyaml get-value id)
@@ -126,12 +129,12 @@ function convert() {
     echo "Processing ${vdu_id}"
 
     if [ "${vdu_format}" != "docker" ]; then
-      echo "WARNING: 'vm_image_format' is not docker. Skipping"
+      echo "WARNING: 'vm_image_format' is not docker. Skipping VDU."
       continue
     fi
 
     if ! docker_image_exists "${vdu_image}"; then
-      echo "WARNING: Docker image '${vdu_image}' does not exist in Docker Hub. Skipping"
+      echo "WARNING: Docker image '${vdu_image}' does not exist in Docker Hub. Skipping VDU."
       continue
     fi
 
@@ -167,24 +170,27 @@ function main() {
         ;;
       -b|--base-image)
         [[ -n "${2}" ]] || die "ERROR: Base image is not specified."
-        base_image="${2}"
-        base_image_specified=true
+        BASE_IMAGE="${2}"
+        BASE_IMAGE_SPECIFIED=true
         shift 2
+        ;;
+      -r|--local-reqistry)
+        USE_LOCAL_REGISTRY=true
+        shift 1
         ;;
       -*|--*)
         die "ERROR: Unknown argument '${1}'"
         ;;
       *)
-        [[ -z "${vnfd}" ]] || die "ERROR: Too much arguments."
-        vnfd="${1}"
+        [[ -z "${VNFD}" ]] || die "ERROR: Too much arguments."
+        VNFD="${1}"
         shift
         ;;
     esac
   done
   
-  [[ -n "${vnfd}" ]] || die "ERROR: VNFD is not specified."
-  [[ -f "${vnfd}" ]] || die "ERROR: File ${vnfd} does not exist."
-  [[ -n "${base_image}" ]] || base_image_specified=false
+  [[ -n "${VNFD}" ]] || die "ERROR: VNFD is not specified."
+  [[ -f "${VNFD}" ]] || die "ERROR: File ${VNFD} does not exist."
 
   check_requirements
   get_base_image
