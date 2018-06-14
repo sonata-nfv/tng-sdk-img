@@ -33,29 +33,33 @@ function check_requirements() {
 function create_seed() {
   echo "Creating seed"
   seed_image=$(mktemp --suffix converter)
-  local user_data=$(mktemp --suffix converter)
+  local user_data_file=$(mktemp --suffix converter)
   local udev_rules_file=$(mktemp --suffix converter)
+  local service_file="${DIR}/vnf-container.service"
+  local user_data_template="${DIR}/user-data.template"
+  local netplug_file="${DIR}/netplug"
 
   IFS=', ' read -r -a array <<< "${vdu_interfaces}";
   for index in "${!array[@]}"; do
     echo "KERNEL==\"e*\" SUBSYSTEM==\"net\" ATTRS{ifindex}==\"$((index+2))\" NAME=\"${array[index]}\"" >> "${udev_rules_file}"
   done
 
-  local vnf_container_service=$(cat vnf-container.service | sed "s/^/    /")
-  local netplug=$(cat netplug | sed "s/^/    /")
-  local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
+  local vnf_container_service=$(cat ${service_file} | sed "s/^/    /")
+  local netplug=$(cat ${netplug_file} | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")
+  local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
 
-  eval "cat << EOF > "${user_data}"
-$(<user-data.template)
-  EOF
+  eval "cat << EOF > "${user_data_file}"
+$(<${user_data_template})
+EOF
   " 2> /dev/null
 
-  cloud-localds "${seed_image}" "${user_data}"
+  cloud-localds "${seed_image}" "${user_data_file}"
 
-  rm -f "${user_data}"
+  rm -f "${user_data_file}"
   rm -f "${udev_rules_file}"
   echo "OK"
+
 }
 
 function delete_seed() {
