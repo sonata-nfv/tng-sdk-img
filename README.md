@@ -15,7 +15,9 @@ sudo sh install.sh
 I recommend to use `checkinstall` instead of the last command to let your package manager track changes.
 
 ```shell
-sudo checkinstall --nodoc --pkgname tng-sdk-img --pkgversion=1 --deldesc --backup=no -y ./install.sh
+checkinstall ./install.sh
+# or
+checkinstall --nodoc --pkgname tng-sdk-img --pkgversion=1 --deldesc=yes --backup=no -y ./install.sh
 ```
 
 ## Usage

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXEC="${0}"
+EXEC="tng-sdk-img convert"
 VERSION="0.1"
 PLATFORM="sonata"
 
@@ -16,7 +16,7 @@ function print_help() {
   echo "Options:"
   echo -e "\t--help"
   echo -e "\t--version"
-  echo -e "\t--platform   \tTarget platform - sonata (default) or tango"
+  echo -e "\t--platform   \tTarget platform: sonata (default) or tango"
   echo -e "\t--base-image \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
 
@@ -167,6 +167,9 @@ function main() {
         base_image_specified=true
         shift 2
         ;;
+      -*|--*)
+        die "ERROR: Unknown argument '${1}'"
+        ;;
       *)
         [[ -z "${vnfd}" ]] || die "ERROR: Too much arguments."
         vnfd="${1}"
@@ -184,9 +187,6 @@ function main() {
   convert
   delete_base_image
 }
-
-print_help
-exit 0
 
 main "${@}"
 

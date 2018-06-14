@@ -1,6 +1,6 @@
 #!/bin/bash
 
-EXEC="${0}"
+EXEC="tng-sdk-img"
 VERSION=0.1
 APP_DIR="$HOME/.local/share/tng-sdk-img"
 TOOLS=$(ls "${APP_DIR}" 2> /dev/null)
@@ -34,7 +34,7 @@ function print_install_error() {
 
 function run_tool() {
   local tool_name="${1}"
-  local tool="${APP_DIR}/${TOOL_NAME}/${TOOL_NAME}"
+  local tool="${APP_DIR}/${tool_name}/${tool_name}"
   
   if [ ! -f "${tool}" ]; then
     echo "ERROR: Tool \"${tool_name}\" is not found."
@@ -70,6 +70,9 @@ function main() {
       -t|--tools)
         print_tools
         exit 0
+        ;;
+      -*|--*)
+        die "ERROR: Unknown argument '${1}'"
         ;;
       *)
         run_tool "${@}"
