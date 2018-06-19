@@ -27,8 +27,7 @@ function print_help() {
   echo "Options:"
   echo -e "\t--help"
   echo -e "\t--version"
-  echo -e "\t--registry             \tRun the local docker registry. Specify to use local docker images."
-  echo -e "\t--platform <platform>  \tTarget platform: sonata (default) or tango"
+  echo -e "\t--registry             \tRun local docker registry. Specify to use local docker images."
   echo -e "\t--base-image <path>    \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
 
@@ -237,11 +236,6 @@ function main() {
         print_version
         exit 0
         ;;
-      -p|--platform)
-        [[ -n "${2}" ]] || die "ERROR: A target platform is not specified."
-        PLATFORM="${2}"
-        shift 2
-        ;;
       -b|--base-image)
         [[ -n "${2}" ]] || die "ERROR: A base image is not specified."
         BASE_IMAGE="${2}"
@@ -263,7 +257,7 @@ function main() {
     esac
   done
   
-  [[ -n "${VNFD}" ]] || die "ERROR: VNFD is not specified."
+  [[ -n "${VNFD}" ]] || die "ERROR: A VNFD is not specified."
   [[ -f "${VNFD}" ]] || die "ERROR: The file ${VNFD} does not exist."
 
 

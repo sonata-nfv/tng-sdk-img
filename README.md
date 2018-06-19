@@ -12,14 +12,6 @@ cd tng-sdk-img
 sudo sh install.sh
 ```
 
-I recommend to use `checkinstall` instead of the last command to let your package manager track changes.
-
-```shell
-checkinstall ./install.sh
-# or
-checkinstall --nodoc --pkgname tng-sdk-img --pkgversion=1 --deldesc=yes --backup=no -y ./install.sh
-```
-
 ## Usage
 
 ```shell
@@ -58,8 +50,8 @@ Usage:
 Options:
 	--help
 	--version
-	--platform   	Target platform - sonata (default) or tango
-	--base-image 	Path to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified.
+	--registry   		Run the local docker registry. Specify to use local docker images.
+	--base-image <path> 	Path to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified.
 ```
 
 ---

@@ -1,4 +1,6 @@
 #cloud-config
+password: s0nata
+chpasswd: { expire: False }
 power_state:
   mode: poweroff
   timeout: 30
@@ -7,6 +9,7 @@ package_update: true
 package_upgrade: true
 packages:
 - netplug
+- openssh-server
 write_files:
 - path: /etc/systemd/system/vnf-container.service
   permissions: 0644
