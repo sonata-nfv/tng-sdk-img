@@ -25,10 +25,10 @@ function print_help() {
   echo "Usage:"
   echo -e "\t${EXEC} [OPTIONS] VNFD"
   echo "Options:"
-  echo -e "\t--help"
-  echo -e "\t--version"
-  echo -e "\t--registry             \tRun local docker registry. Specify to use local docker images."
-  echo -e "\t--base-image <path>    \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
+  echo -e "\t-h, --help"
+  echo -e "\t-v, --version"
+  echo -e "\t-r, --local-registry             \tRun local docker registry. Specify to use local docker images."
+  echo -e "\t-b, --base-image <path>    \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
 
 
@@ -36,7 +36,7 @@ function check_requirements() {
   echo "Checking requirements"
   local commands=(wget cloud-localds kvm shyaml curl)
   for command in "${commands[@]}"; do
-    command -v "${command}" &> /dev/null
+    command -v "${command}" &> /dev/null ]]
     [[ ${?} -eq 0 ]] || die "${command} not found"
   done
   echo "OK"
@@ -84,7 +84,6 @@ function delete_seed() {
 
 
 function get_base_image() {
-  [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
   echo "Downloading the base image"
   wget "${BASE_IMAGE_URL}" -O "${BASE_IMAGE}" -q --show-progress
   echo "OK"
@@ -92,7 +91,6 @@ function get_base_image() {
 
 
 function delete_base_image() {
-  [[ ! $BASE_IMAGE_SPECIFIED ]] || return 0
   echo "Deleting the base image"
   rm -f "${BASE_IMAGE}"
   echo "OK"
@@ -162,7 +160,7 @@ function push_image() {
 
 function stop_docker_registry() {
   echo "Stopping the local docker registry."
-  docker container stop registry && docker container rm -v registry
+  docker container stop registry > /dev/null && docker container rm -v registry > /dev/null
   echo "OK"
 }
 
@@ -261,13 +259,13 @@ function main() {
   [[ -f "${VNFD}" ]] || die "ERROR: The file ${VNFD} does not exist."
 
 
-  [[ "${USE_LOCAL_REGISTRY}" ]] || start_docker_registry
+  [[ "${USE_LOCAL_REGISTRY}" = true ]] && start_docker_registry
+  [[ "${BASE_IMAGE_SPECIFIED}" = false ]] && get_base_image
 
-  get_base_image
   convert
-  delete_base_image
 
-  [[ "${USE_LOCAL_REGISTRY}" ]] || stop_docker_registry
+  [[ "${BASE_IMAGE_SPECIFIED}" = false ]] && delete_base_image
+  [[ "${USE_LOCAL_REGISTRY}" = true ]] && stop_docker_registry
 }
 
 
