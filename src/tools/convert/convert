@@ -36,7 +36,7 @@ function check_requirements() {
   echo "Checking requirements"
   local commands=(wget cloud-localds kvm shyaml curl)
   for command in "${commands[@]}"; do
-    command -v "${command}" &> /dev/null ]]
+    command -v "${command}" &> /dev/null
     [[ ${?} -eq 0 ]] || die "${command} not found"
   done
   echo "OK"
