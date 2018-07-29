@@ -1,6 +1,11 @@
 #cloud-config
-password: s0nata
-chpasswd: { expire: False }
+users:
+- name: ubuntu
+  gecos: Ubuntu
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  plain_text_passwd: 's0nata'
+  lock_passwd: false
+  shell: /bin/bash
 power_state:
   mode: poweroff
   timeout: 30
