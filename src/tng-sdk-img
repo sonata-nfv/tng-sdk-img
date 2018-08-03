@@ -34,7 +34,7 @@
 
 EXEC="tng-sdk-img"
 VERSION=0.1
-APP_DIR="$HOME/.local/share/tng-sdk-img"
+APP_DIR="/usr/local/share/tng-sdk-img"
 TOOLS=$(ls "${APP_DIR}" 2> /dev/null)
 
 function print_help() {

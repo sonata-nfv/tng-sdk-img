@@ -33,8 +33,9 @@
 # partner consortium (www.5gtango.eu).
 
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/src"
-BIN_DIR="$HOME/.local/bin"
-APP_DIR="$HOME/.local/share"
+
+BIN_DIR="/usr/local/bin"
+APP_DIR="/usr/local/share"
 
 [[ -d $BIN_DIR ]] || mkdir -p $BIN_DIR
 [[ -d $APP_DIR ]] || mkdir -p $APP_DIR
