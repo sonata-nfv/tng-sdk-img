@@ -5,7 +5,7 @@ After=docker.service
 
 [Service]
 Restart=always
-ExecStart=/usr/bin/docker run -h %H --name vnf-container --privileged --network=host vnf-container bash -c "bash -c '\$SON_EMU_CMD'; while true; do sleep 1000; done"
+ExecStart=/usr/bin/docker run -h %H --name vnf-container --privileged --network=host vnf-container sh -c 'exec $SON_EMU_CMD'
 ExecStop=/usr/bin/docker rm -f vnf-container
 
 [Install]

@@ -40,4 +40,5 @@ runcmd:
 - curl -fsSL https://get.docker.com/ | sh
 - docker pull $vdu_image
 - docker image tag $vdu_image vnf-container
+- usermod -aG docker ubuntu
 - systemctl enable vnf-container.service
