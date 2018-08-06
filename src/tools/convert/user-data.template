@@ -1,11 +1,6 @@
 #cloud-config
-users:
-- name: ubuntu
-  gecos: Ubuntu
-  sudo: ALL=(ALL) NOPASSWD:ALL
-  plain_text_passwd: 's0nata'
-  lock_passwd: false
-  shell: /bin/bash
+groups:
+- docker
 power_state:
   mode: poweroff
   timeout: 30
@@ -32,6 +27,10 @@ $netplug
   permissions: 0644
   content: |
 $vdu_interfaces
+- path: /etc/dhcp/dhclient.conf
+  permissions: 0644
+  content: |
+$dhclient_conf
 - path: /etc/docker/daemon.json
   permissions: 0644
   content: |

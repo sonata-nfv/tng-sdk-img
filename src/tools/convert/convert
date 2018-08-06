@@ -83,14 +83,22 @@ function create_seed() {
   local service_file="${DIR}/vnf-container.service"
   local user_data_template="${DIR}/user-data.template"
   local netplug_file="${DIR}/netplug"
+  local dhclient_conf_file="${DIR}/dhclient.conf"
 
   IFS=', ' read -r -a array <<< "${vdu_interfaces}";
   for index in "${!array[@]}"; do
     echo "KERNEL==\"e*\" SUBSYSTEM==\"net\" ATTRS{ifindex}==\"$((index+2))\" NAME=\"${array[index]}\"" >> "${udev_rules_file}"
   done
 
+  if [[ "${mgmt_vdu}" == "${vdu_id}" ]]; then
+    management_interface="${mgmt_cp}"
+  else
+    management_interface="${array[0]}"
+  fi
+
   local vnf_container_service=$(cat ${service_file} | sed "s/^/    /")
   local netplug=$(cat ${netplug_file} | sed "s/^/    /")
+  local dhclient_conf=$(cat ${dhclient_conf_file} | sed "s/\$management_interface/$management_interface/g" | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")
   local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
   local docker_conf="    {\"insecure-registries\":[\"${KVM_HOST_IP}:${REGISTRY_PORT}\"]}"
@@ -201,7 +209,10 @@ function convert() {
   echo "Starting the conversion"
   vnf_name=$(cat "${VNFD}" | shyaml get-value name)
 
-  local local_image=false
+  # Get management interface
+  read -a mgmt <<< $(cat "${VNFD}" | python "${DIR}"/get_management_connection_point.py)
+  mgmt_vdu=${mgmt[0]}
+  mgmt_cp=${mgmt[1]}
 
   # Extract VDUs from descriptor and save them to temporary directory
   local vdu_dir=`mktemp -d --suffix converter`
@@ -286,7 +297,7 @@ function main() {
         ;;
     esac
   done
-  
+
   [[ -n "${VNFD}" ]] || die "ERROR: A VNFD is not specified."
   [[ -f "${VNFD}" ]] || die "ERROR: The file ${VNFD} does not exist."
 
