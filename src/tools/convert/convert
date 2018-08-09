@@ -233,7 +233,7 @@ function convert() {
 
     if "${USE_LOCAL_REGISTRY}"; then
       if [[ -z "$(docker images -q ${vdu_image} 2> /dev/null)" ]]; then
-        echo "WARNING: The docker image '${vdu_image}' does not exist in locally. Trying to find it in Docker hub."
+        echo "WARNING: The docker image '${vdu_image}' does not exist locally. Trying to find it in Docker hub."
         if ! docker_image_exists "${vdu_image}"; then
           echo "WARNING: The docker image '${vdu_image}' does not exist in Docker Hub. Skipping the VDU."
           continue
