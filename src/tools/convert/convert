@@ -83,7 +83,6 @@ function create_seed() {
   local service_file="${DIR}/vnf-container.service"
   local user_data_template="${DIR}/user-data.template"
   local netplug_file="${DIR}/netplug"
-  local dhclient_conf_file="${DIR}/dhclient.conf"
 
   IFS=', ' read -r -a array <<< "${vdu_interfaces}";
   for index in "${!array[@]}"; do
@@ -98,7 +97,6 @@ function create_seed() {
 
   local vnf_container_service=$(cat ${service_file} | sed "s/^/    /")
   local netplug=$(cat ${netplug_file} | sed "s/^/    /")
-  local dhclient_conf=$(cat ${dhclient_conf_file} | sed "s/\$management_interface/$management_interface/g" | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")
   local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
   local docker_conf="    {\"insecure-registries\":[\"${KVM_HOST_IP}:${REGISTRY_PORT}\"]}"

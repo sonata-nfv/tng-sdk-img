@@ -27,10 +27,6 @@ $netplug
   permissions: 0644
   content: |
 $vdu_interfaces
-- path: /etc/dhcp/dhclient.conf
-  permissions: 0644
-  content: |
-$dhclient_conf
 - path: /etc/docker/daemon.json
   permissions: 0644
   content: |
@@ -41,3 +37,5 @@ runcmd:
 - docker image tag $vdu_image vnf-container
 - usermod -aG docker ubuntu
 - systemctl enable vnf-container.service
+- echo "auto $management_interface" >> /etc/network/interfaces
+- echo "iface $management_interface inet dhcp" >> /etc/network/interfaces
