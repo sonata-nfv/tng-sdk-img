@@ -80,13 +80,16 @@ function create_seed() {
   seed_image=$(mktemp --suffix converter)
   local user_data_file=$(mktemp --suffix converter)
   local udev_rules_file=$(mktemp --suffix converter)
+  local rc_local_file=$(mktemp --suffix converter)
   local service_file="${DIR}/vnf-container.service"
   local user_data_template="${DIR}/user-data.template"
   local netplug_file="${DIR}/netplug"
+  local interfaces_up_file="${DIR}/interfaces_up.sh"
 
   IFS=', ' read -r -a array <<< "${vdu_interfaces}";
   for index in "${!array[@]}"; do
     echo "KERNEL==\"e*\" SUBSYSTEM==\"net\" ATTRS{ifindex}==\"$((index+2))\" NAME=\"${array[index]}\"" >> "${udev_rules_file}"
+    echo "/etc/network/if-up.d/interfaces_up.sh \"${array[index]}\"" >> "${rc_local_file}"
   done
 
   if [[ "${mgmt_vdu}" == "${vdu_id}" ]]; then
@@ -97,7 +100,9 @@ function create_seed() {
 
   local vnf_container_service=$(cat ${service_file} | sed "s/^/    /")
   local netplug=$(cat ${netplug_file} | sed "s/^/    /")
+  local interfaces_up=$(cat ${interfaces_up_file} | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")
+  local rc_local=$(cat ${rc_local_file} | sed "s/^/    /")
   local vdu_interfaces=$(echo "${vdu_interfaces}" | xargs -n1 | sed "s/^/    /")
   local docker_conf="    {\"insecure-registries\":[\"${KVM_HOST_IP}:${REGISTRY_PORT}\"]}"
 
@@ -110,6 +115,7 @@ EOF
 
   rm -f "${user_data_file}"
   rm -f "${udev_rules_file}"
+  rm -f "${rc_local_file}"
   echo "OK"
 }
 

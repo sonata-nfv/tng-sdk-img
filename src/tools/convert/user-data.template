@@ -31,6 +31,14 @@ $vdu_interfaces
   permissions: 0644
   content: |
 $docker_conf
+- path: /etc/network/if-up.d/interfaces_up.sh
+  permissions: 0644
+  content: |
+$interfaces_up
+- path: /etc/rc.local
+  permissions: 0644
+  content: |
+$rc_local
 runcmd:
 - curl -fsSL https://get.docker.com/ | sh
 - docker pull $vdu_image
