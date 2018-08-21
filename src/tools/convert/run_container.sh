@@ -38,9 +38,9 @@ CMD="/usr/bin/docker run --name vnf-container --privileged --network=host vnf-co
 if [[ $? == 0 ]]; then
     entrypoint=$(docker inspect --format='{{.Config.Entrypoint}}' vnf-container)
     if [[ "${entrypoint}" == "[]" ]]; then
-        $CMD sh -c 'exec $SON_EMU_CMD'
+        $CMD sh -c '$SON_EMU_CMD'
     else
-        $CMD 'exec $SON_EMU_CMD'
+        $CMD -c '$SON_EMU_CMD'
     fi
 else
     "${CMD}"
