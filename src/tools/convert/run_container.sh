@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO
 # ALL RIGHTS RESERVED.
@@ -32,18 +32,13 @@
 # acknowledge the contributions of their colleagues of the 5GTANGO
 # partner consortium (www.5gtango.eu).
 
-docker inspect vnf-container:latest | grep SON_EMU_CMD &> /dev/null
-
 CMD="/usr/bin/docker run --name vnf-container --privileged --network=host vnf-container"
+
+docker inspect vnf-container:latest | grep SON_EMU_CMD &> /dev/null
 if [[ $? == 0 ]]; then
-    entrypoint=$(docker inspect --format='{{.Config.Entrypoint}}' vnf-container)
-    if [[ "${entrypoint}" == "[]" ]]; then
-        $CMD sh -c '$SON_EMU_CMD'
-    else
-        $CMD -c '$SON_EMU_CMD'
-    fi
+    $CMD sh -c '$SON_EMU_CMD'
 else
-    "${CMD}"
+    $CMD
 fi
 
 
