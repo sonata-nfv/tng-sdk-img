@@ -34,7 +34,6 @@
 
 EXEC="tng-sdk-img convert"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-VERSION="0.1"
 
 BASE_IMAGE_URL="http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-disk1.img"
 BASE_IMAGE=$(mktemp --suffix converter)
@@ -55,12 +54,11 @@ function die() {
 
 function print_help() {
   echo "Usage:"
-  echo -e "\t${EXEC} [OPTIONS] VNFD"
+  echo -e "  ${EXEC} [OPTIONS] VNFD"
   echo "Options:"
-  echo -e "\t-h, --help"
-  echo -e "\t-v, --version"
-  echo -e "\t-r, --local-registry             \tRun local docker registry. Specify to use local docker images."
-  echo -e "\t-b, --base-image <path>    \tPath to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
+  echo -e "  -h, --help"
+  echo -e "  -r, --local-registry     Run local docker registry. Specify to use local docker images."
+  echo -e "  -b, --base-image <path>  Path to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified."
 }
 
 
@@ -82,6 +80,7 @@ function create_seed() {
   local udev_rules_file=$(mktemp --suffix converter)
   local rc_local_file=$(mktemp --suffix converter)
   local service_file="${DIR}/vnf-container.service"
+  local run_container_file="${DIR}/run_container.sh"
   local user_data_template="${DIR}/user-data.template"
   local netplug_file="${DIR}/netplug"
   local interfaces_up_file="${DIR}/interfaces_up.sh"
@@ -99,6 +98,7 @@ function create_seed() {
   fi
 
   local vnf_container_service=$(cat ${service_file} | sed "s/^/    /")
+  local run_container=$(cat ${run_container_file} | sed "s/^/    /")
   local netplug=$(cat ${netplug_file} | sed "s/^/    /")
   local interfaces_up=$(cat ${interfaces_up_file} | sed "s/^/    /")
   local udev_rules=$(cat ${udev_rules_file} | sed "s/^/    /")

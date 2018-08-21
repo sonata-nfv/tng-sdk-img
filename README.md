@@ -51,12 +51,11 @@ This tool is responsible to convert Docker-based VNFs to Virtual Machine-based. 
 
 ```shell
 Usage:
-	tng-sdk-img convert [OPTIONS] VNFD
+  tng-sdk-img convert [OPTIONS] VNFD
 Options:
-	--help
-	--version
-	--registry   		Run the local docker registry. Specify to use local docker images.
-	--base-image <path> 	Path to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified.
+  --help
+  --registry   		Run the local docker registry. Specify to use local docker images.
+  --base-image <path> 	Path to the base image. Ubuntu 16.04 cloud image will be downloaded to /tmp if not specified.
 ```
 
 ---

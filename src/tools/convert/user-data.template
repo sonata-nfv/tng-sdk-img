@@ -15,6 +15,10 @@ write_files:
   permissions: 0644
   content: |
 $vnf_container_service
+- path: /opt/run_container.sh
+  permissions: 0755
+  content: |
+$run_container
 - path: /etc/udev/rules.d/71-rename-ifs.rules
   permissions: 0644
   content: |
@@ -32,11 +36,11 @@ $vdu_interfaces
   content: |
 $docker_conf
 - path: /etc/network/if-up.d/interfaces_up.sh
-  permissions: 0644
+  permissions: 0755
   content: |
 $interfaces_up
 - path: /etc/rc.local
-  permissions: 0644
+  permissions: 0755
   content: |
 $rc_local
 runcmd:
