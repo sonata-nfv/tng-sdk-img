@@ -36,7 +36,7 @@ docker inspect vnf-container:latest | grep SON_EMU_CMD &> /dev/null
 
 CMD="/usr/bin/docker run --name vnf-container --privileged --network=host vnf-container"
 if [[ $? == 0 ]]; then
-    entrypoint=$(docker inspect --format='{{.Config.Entrypoint}}' simplehttp_vnf)
+    entrypoint=$(docker inspect --format='{{.Config.Entrypoint}}' vnf-container)
     if [[ "${entrypoint}" == "[]" ]]; then
         $CMD sh -c 'exec $SON_EMU_CMD'
     else
